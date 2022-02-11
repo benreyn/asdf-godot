@@ -30,11 +30,17 @@ list_all_versions() {
 }
 
 download_release() {
-  local version filename url
+  local version filename platform url
   version="$1"
   filename="$2"
 
-  url="$REPO/${version}/Godot_v${version}-stable_x11.64.zip"
+  if [[ "$(uname)" == 'Linux' ]]; then
+    platform='x11.64'
+  elif [[ "$(uname)" == 'Darwin' ]]; then
+    platform='osx.universal'
+  fi
+
+  url="$REPO/${version}/Godot_v${version}-stable_${platform}.zip"
 
   echo "* Downloading $TOOL_NAME release $version..."
   curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
@@ -44,6 +50,13 @@ install_version() {
   local install_type="$1"
   local version="$2"
   local install_path="$3"
+  local platform
+
+  if [[ "$(uname)" == 'Linux' ]]; then
+    platform='x11.64'
+  elif [[ "$(uname)" == 'Darwin' ]]; then
+    platform='osx.univeral'
+  fi
 
   if [ "$install_type" != "version" ]; then
     fail "asdf-$TOOL_NAME supports release installs only"
@@ -54,7 +67,7 @@ install_version() {
     mkdir -p "$install_path/bin"
     download_release "$version" "$release_file"
     unzip -qq "$release_file" -d "$install_path" || fail "Could not extract $release_file"
-    mv "$install_path/Godot_v${version}-stable_x11.64" "$install_path/bin/godot"
+    mv "$install_path/Godot_v${version}-stable_${platform}" "$install_path/bin/godot"
     rm "$release_file"
 
     local tool_cmd
